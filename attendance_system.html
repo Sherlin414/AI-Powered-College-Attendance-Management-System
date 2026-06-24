@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Attendance Management System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --surface3: #1e2d44;
+    --border: rgba(99,179,237,0.12);
+    --border2: rgba(99,179,237,0.22);
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --radius: 12px;
+    --radius2: 8px;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6,182,212,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 0.5px solid var(--border);
+    background: rgba(17,24,39,0.7);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .header-right {
+    display: flex; align-items: center; gap: 1rem;
+  }
+
+  .badge-ai {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    background: rgba(59,130,246,0.15);
+    color: #60a5fa;
+    border: 0.5px solid rgba(59,130,246,0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: var(--radius2);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    background: var(--surface);
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Sora', sans-serif;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  .card-sm { padding: 1.25rem; }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .card-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* GRID */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .grid-12 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  @media (max-width: 900px) {
+    .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-12 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    main { padding: 1rem; }
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .section-title small {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text3);
+  }
+
+  .mb-6 { margin-bottom: 1.5rem; }
+  .mb-4 { margin-bottom: 1rem; }
+  .mb-3 { margin-bottom: 0.75rem; }
+
+  /* STAT CARDS */
+  .stat-blue .card-value { color: #60a5fa; }
+  .stat-green .card-value { color: #34d399; }
+  .stat-amber .card-value { color: #fbbf24; }
+  .stat-red .card-value { color: #f87171; }
+
+  .trend {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+  .trend-up { background: rgba(16,185,129,0.15); color: #34d399; }
+  .trend-down { background: rgba(239,68,68,0.15); color: #f87171; }
+  .trend-neutral { background: rgba(148,163,184,0.15); color: #94a3b8; }
+
+  /* STUDENT TABLE */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead { background: var(--surface2); }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr {
+    transition: background 0.15s;
+    background: var(--surface);
+  }
+  tbody tr:hover { background: var(--surface2); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 20px;
+    overflow: hidden;
+    min-width: 80px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.6s ease;
+  }
+
+  .pct-danger .progress-fill { background: var(--danger); }
+  .pct-warning .progress-fill { background: var(--warning); }
+  .pct-good .progress-fill { background: var(--success); }
+  .pct-perfect .progress-fill { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  /* BADGE */
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 0.5px solid rgba(239,68,68,0.25); }
+  .badge-warning { background: rgba(245,158,11,0.15); color: #fbbf24; border: 0.5px solid rgba(245,158,11,0.25); }
+  .badge-success { background: rgba(16,185,129,0.15); color: #34d399; border: 0.5px solid rgba(16,185,129,0.25); }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 0.5px solid rgba(59,130,246,0.25); }
+
+  /* SEARCH BAR */
+  .search-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 9px 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+
+  select.filter-select {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 9px 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  select.filter-select:focus { border-color: var(--accent); }
+
+  /* NOTIFICATIONS */
+  .notif {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 1rem 1.25rem;
+    border-bottom: 0.5px solid var(--border);
+    transition: background 0.15s;
+    cursor: default;
+  }
+  .notif:hover { background: var(--surface2); }
+  .notif:last-child { border-bottom: none; }
+
+  .notif-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .notif-icon-alert { background: rgba(239,68,68,0.15); }
+  .notif-icon-star { background: rgba(251,191,36,0.15); }
+  .notif-icon-ai { background: rgba(59,130,246,0.15); }
+
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .notif-sub { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .notif-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 3px; }
+
+  /* CHART (Canvas) */
+  canvas { max-width: 100%; }
+
+  /* BAR CHART (CSS) */
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 140px;
+    padding: 0 4px;
+  }
+
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.6s ease;
+  }
+
+  .bar-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* MOTIVATIONAL MESSAGES */
+  .msg-card {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-left: 2px solid var(--accent2);
+    border-radius: var(--radius2);
+    padding: 1rem 1.25rem;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .msg-card.alert-msg { border-left-color: var(--danger); }
+  .msg-card.star-msg { border-left-color: var(--warning); }
+
+  .msg-preview {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .msg-meta {
+    font-size: 11px;
+    color: var(--text3);
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+
+  /* AI INDICATOR */
+  .ai-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* FORM */
+  .form-group { margin-bottom: 1.25rem; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 10px 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.2);
+    color: #f87171;
+    border: 0.5px solid rgba(239,68,68,0.35);
+    padding: 8px 18px;
+    border-radius: var(--radius2);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.3); }
+
+  .btn-success {
+    background: rgba(16,185,129,0.2);
+    color: #34d399;
+    border: 0.5px solid rgba(16,185,129,0.35);
+    padding: 8px 18px;
+    border-radius: var(--radius2);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-success:hover { background: rgba(16,185,129,0.3); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 0.5px solid var(--border);
+    padding: 8px 18px;
+    border-radius: var(--radius2);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  .flex-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 2rem;
+    max-width: 480px;
+    width: 90%;
+    position: relative;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius2);
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 300px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* DONUT CHART CSS */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .donut-svg { flex-shrink: 0; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .donut-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* avatar */
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .name-cell { display: flex; align-items: center; gap: 10px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎓</div>
+    AttendAI — Smart Attendance System
+  </div>
+  <div class="header-right">
+    <span class="badge-ai"><span class="ai-dot"></span>AI ACTIVE</span>
+    <button class="btn-primary" onclick="openModal('add-student-modal')">+ Add Student</button>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <button class="tab active" onclick="showPage('dashboard', this)">Dashboard</button>
+  <button class="tab" onclick="showPage('students', this)">Students</button>
+  <button class="tab" onclick="showPage('attendance', this)">Mark Attendance</button>
+  <button class="tab" onclick="showPage('alerts', this)">AI Alerts</button>
+  <button class="tab" onclick="showPage('messages', this)">Motivational Messages</button>
+  <button class="tab" onclick="showPage('reports', this)">Reports</button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+  <div class="grid-4 mb-6">
+    <div class="card card-sm stat-blue">
+      <div class="card-title">Total Students</div>
+      <div class="card-value" id="stat-total">48</div>
+      <div class="card-sub">Across 3 departments</div>
+      <span class="trend trend-neutral">Spring Semester</span>
+    </div>
+    <div class="card card-sm stat-green">
+      <div class="card-title">Avg Attendance</div>
+      <div class="card-value" id="stat-avg">78.4%</div>
+      <div class="card-sub">This week</div>
+      <span class="trend trend-up">↑ 2.1% from last week</span>
+    </div>
+    <div class="card card-sm stat-amber">
+      <div class="card-title">At Risk Students</div>
+      <div class="card-value" id="stat-risk">9</div>
+      <div class="card-sub">Below 70% threshold</div>
+      <span class="trend trend-down">↓ 3 new this week</span>
+    </div>
+    <div class="card card-sm stat-red" style="--card-accent:#fbbf24">
+      <div class="card-title">Perfect Attendance</div>
+      <div class="card-value" id="stat-perfect" style="color:#fbbf24">11</div>
+      <div class="card-sub">100% this month</div>
+      <span class="trend trend-up" style="background:rgba(251,191,36,0.15);color:#fbbf24">🏆 Motivational msg sent</span>
+    </div>
+  </div>
+
+  <div class="grid-12 mb-6">
+    <!-- Attendance Trend -->
+    <div class="card">
+      <div class="section-title">Weekly Attendance Trend <small>Last 8 weeks</small></div>
+      <div style="position:relative; height: 180px; margin-top: 8px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribution donut -->
+    <div class="card">
+      <div class="section-title">Attendance Distribution</div>
+      <div class="donut-wrap" style="margin-top: 1rem;">
+        <svg class="donut-svg" viewBox="0 0 120 120" width="110" height="110" id="donut-svg">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#1e2d44" stroke-width="18"/>
+          <!-- segments drawn by JS -->
+        </svg>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Alerts -->
+  <div class="grid-2 mb-6">
+    <div class="card" style="padding: 0;">
+      <div style="padding: 1.25rem 1.5rem 0.75rem; border-bottom: 0.5px solid var(--border);">
+        <div class="section-title" style="margin-bottom:0">Recent AI Alerts <small><span class="ai-dot"></span>Auto-generated</small></div>
+      </div>
+      <div id="recent-alerts-list"></div>
+    </div>
+    <div class="card" style="padding:0;">
+      <div style="padding: 1.25rem 1.5rem 0.75rem; border-bottom: 0.5px solid var(--border);">
+        <div class="section-title" style="margin-bottom:0">Today's Attendance Snapshot</div>
+      </div>
+      <div style="padding: 1.25rem;">
+        <div id="dept-bars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENTS PAGE -->
+<div class="page" id="page-students">
+  <div class="section-title mb-4">
+    All Students
+    <small id="students-count">Showing 0 students</small>
+  </div>
+  <div class="search-row mb-4">
+    <input class="search-input" placeholder="Search by name or roll number…" id="student-search" oninput="renderStudentsTable()">
+    <select class="filter-select" id="dept-filter" onchange="renderStudentsTable()">
+      <option value="">All Departments</option>
+      <option>Computer Science</option>
+      <option>Electronics</option>
+      <option>Mechanical</option>
+    </select>
+    <select class="filter-select" id="status-filter" onchange="renderStudentsTable()">
+      <option value="">All Status</option>
+      <option value="danger">At Risk (&lt;70%)</option>
+      <option value="warning">Low (70-80%)</option>
+      <option value="good">Good (80-95%)</option>
+      <option value="perfect">Perfect (100%)</option>
+    </select>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Roll No</th>
+          <th>Department</th>
+          <th>Attendance</th>
+          <th>Progress</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="students-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MARK ATTENDANCE PAGE -->
+<div class="page" id="page-attendance">
+  <div class="grid-2 mb-4">
+    <div>
+      <div class="section-title">Mark Today's Attendance</div>
+      <div class="card" style="padding:0;">
+        <div style="padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="font-size: 13px; color: var(--text2);">
+            📅 <span id="today-date"></span>
+          </div>
+          <select class="filter-select" id="dept-attendance" onchange="renderAttendanceList()">
+            <option>Computer Science</option>
+            <option>Electronics</option>
+            <option>Mechanical</option>
+          </select>
+        </div>
+        <div id="attendance-list" style="max-height: 420px; overflow-y: auto;"></div>
+        <div style="padding: 1rem 1.25rem; border-top: 0.5px solid var(--border); display:flex; gap:10px; justify-content:flex-end; flex-wrap: wrap;">
+          <button class="btn-ghost" onclick="selectAll(true)">Select All Present</button>
+          <button class="btn-ghost" onclick="selectAll(false)">Mark All Absent</button>
+          <button class="btn-primary" onclick="saveAttendance()">💾 Save & Run AI Analysis</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">AI Analysis Result <small><span class="ai-dot"></span>Live</small></div>
+      <div class="card" id="ai-analysis-box">
+        <div style="text-align: center; padding: 2rem; color: var(--text3);">
+          <div style="font-size: 32px; margin-bottom: 12px;">🤖</div>
+          <div style="font-size: 13px;">Save attendance to trigger<br>AI analysis and auto-alerts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS PAGE -->
+<div class="page" id="page-alerts">
+  <div class="section-title mb-4">
+    AI-Generated Alerts
+    <small><span class="ai-dot"></span>Auto-triggers when attendance &lt; 70%</small>
+  </div>
+  <div class="grid-4 mb-6">
+    <div class="card card-sm" style="border-color: rgba(239,68,68,0.25);">
+      <div class="card-title">Critical Alerts</div>
+      <div class="card-value" style="color: #f87171;" id="a-critical">0</div>
+      <div class="card-sub">Below 60%</div>
+    </div>
+    <div class="card card-sm" style="border-color: rgba(245,158,11,0.25);">
+      <div class="card-title">Warning Alerts</div>
+      <div class="card-value" style="color: #fbbf24;" id="a-warning">0</div>
+      <div class="card-sub">60–69%</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Emails Sent Today</div>
+      <div class="card-value" style="color: #60a5fa;" id="a-emails">0</div>
+      <div class="card-sub">Auto-dispatched</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">SMS Alerts</div>
+      <div class="card-value" style="color: #34d399;" id="a-sms">0</div>
+      <div class="card-sub">Sent to guardians</div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;">
+    <div style="padding: 1rem 1.5rem; border-bottom: 0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div class="section-title" style="margin:0">Alert Log</div>
+      <button class="btn-primary" onclick="sendAllAlerts()" style="font-size: 12px; padding: 7px 14px;">📨 Send Pending Alerts</button>
+    </div>
+    <div id="alerts-list"></div>
+  </div>
+</div>
+
+<!-- MOTIVATIONAL MESSAGES PAGE -->
+<div class="page" id="page-messages">
+  <div class="section-title mb-4">
+    Motivational Messages <small>Sent to students with 100% attendance</small>
+  </div>
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-title" style="margin-bottom: 14px;">🏆 Perfect Attendance Students</div>
+      <div id="perfect-students-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom: 12px;">Generate AI Motivational Message</div>
+      <div class="form-group">
+        <label class="form-label">Student Name</label>
+        <input class="form-input" id="msg-student" placeholder="e.g. Aditya Kumar">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message Tone</label>
+        <select class="form-input" id="msg-tone">
+          <option>Encouraging</option>
+          <option>Academic</option>
+          <option>Inspiring</option>
+          <option>Friendly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Delivery Channel</label>
+        <select class="form-input" id="msg-channel">
+          <option>Email</option>
+          <option>SMS</option>
+          <option>Both Email + SMS</option>
+        </select>
+      </div>
+      <div class="flex-row">
+        <button class="btn-primary" onclick="generateMessage()" style="flex:1">🤖 Generate & Send</button>
+      </div>
+      <div id="msg-output" style="margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <div class="section-title mb-3">Message History</div>
+  <div id="msg-history"></div>
+</div>
+
+<!-- REPORTS PAGE -->
+<div class="page" id="page-reports">
+  <div class="section-title mb-4">Analytics & Reports <small>AI-powered insights</small></div>
+  <div class="grid-3 mb-6">
+    <div class="card" style="border-color: rgba(59,130,246,0.25); text-align: center; cursor:pointer;" onclick="showToast('📊 Downloading PDF report…')">
+      <div style="font-size: 28px; margin-bottom: 10px;">📊</div>
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">Full Attendance Report</div>
+      <div style="font-size: 12px; color: var(--text3);">PDF export — all students</div>
+      <div style="margin-top: 12px;"><span class="badge badge-blue">Download PDF</span></div>
+    </div>
+    <div class="card" style="border-color: rgba(16,185,129,0.25); text-align: center; cursor:pointer;" onclick="showToast('📈 Generating department analysis…')">
+      <div style="font-size: 28px; margin-bottom: 10px;">📈</div>
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">Department Analysis</div>
+      <div style="font-size: 12px; color: var(--text3);">Compare across departments</div>
+      <div style="margin-top: 12px;"><span class="badge badge-success">View Report</span></div>
+    </div>
+    <div class="card" style="border-color: rgba(245,158,11,0.25); text-align: center; cursor:pointer;" onclick="showToast('🔮 Running AI prediction model…')">
+      <div style="font-size: 28px; margin-bottom: 10px;">🔮</div>
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">AI Prediction Report</div>
+      <div style="font-size: 12px; color: var(--text3);">Students at risk next month</div>
+      <div style="margin-top: 12px;"><span class="badge badge-warning">Generate</span></div>
+    </div>
+  </div>
+
+  <!-- Dept comparison -->
+  <div class="card mb-6">
+    <div class="section-title mb-4">Department-wise Attendance Comparison</div>
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+      <div id="dept-report-bars" style="flex: 2; min-width: 200px;"></div>
+      <div style="flex: 1; min-width: 160px; display:flex; flex-direction:column; gap: 12px; justify-content: center;" id="dept-stats"></div>
+    </div>
+  </div>
+
+  <!-- AI insights -->
+  <div class="card">
+    <div class="section-title mb-4">🤖 AI Insights <small>Generated automatically</small></div>
+    <div id="ai-insights"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ADD STUDENT MODAL -->
+<div class="modal-overlay" id="add-student-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('add-student-modal')">✕</button>
+    <div class="modal-title">Add New Student</div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="new-name" placeholder="e.g. Priya Sharma">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Roll Number</label>
+      <input class="form-input" id="new-roll" placeholder="e.g. CS2024051">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Department</label>
+      <select class="form-input" id="new-dept">
+        <option>Computer Science</option>
+        <option>Electronics</option>
+        <option>Mechanical</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="new-email" type="email" placeholder="student@college.edu">
+    </div>
+    <div class="flex-row" style="justify-content: flex-end;">
+      <button class="btn-ghost" onclick="closeModal('add-student-modal')">Cancel</button>
+      <button class="btn-primary" onclick="addStudent()">Add Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const AVATARS = ['#3b82f6','#06b6d4','#10b981','#f59e0b','#8b5cf6','#ec4899','#ef4444','#14b8a6'];
+
+let students = [
+  { id:1, name:'Aditya Kumar', roll:'CS2024001', dept:'Computer Science', email:'aditya@college.edu', pct:95, present:19, total:20 },
+  { id:2, name:'Priya Sharma', roll:'CS2024002', dept:'Computer Science', email:'priya@college.edu', pct:62, present:13, total:21 },
+  { id:3, name:'Rahul Verma', roll:'CS2024003', dept:'Computer Science', email:'rahul@college.edu', pct:100, present:20, total:20 },
+  { id:4, name:'Sneha Patel', roll:'CS2024004', dept:'Computer Science', email:'sneha@college.edu', pct:78, present:16, total:21 },
+  { id:5, name:'Karthik R', roll:'CS2024005', dept:'Computer Science', email:'karthik@college.edu', pct:55, present:11, total:20 },
+  { id:6, name:'Meena Iyer', roll:'CS2024006', dept:'Computer Science', email:'meena@college.edu', pct:100, present:21, total:21 },
+  { id:7, name:'Arjun Nair', roll:'CS2024007', dept:'Computer Science', email:'arjun@college.edu', pct:85, present:17, total:20 },
+  { id:8, name:'Divya Menon', roll:'CS2024008', dept:'Computer Science', email:'divya@college.edu', pct:67, present:14, total:21 },
+  { id:9, name:'Vikram Singh', roll:'EC2024001', dept:'Electronics', email:'vikram@college.edu', pct:100, present:20, total:20 },
+  { id:10, name:'Ananya Roy', roll:'EC2024002', dept:'Electronics', email:'ananya@college.edu', pct:73, present:15, total:21 },
+  { id:11, name:'Suresh K', roll:'EC2024003', dept:'Electronics', email:'suresh@college.edu', pct:48, present:10, total:21 },
+  { id:12, name:'Lalitha B', roll:'EC2024004', dept:'Electronics', email:'lalitha@college.edu', pct:91, present:19, total:21 },
+  { id:13, name:'Rohan Das', roll:'EC2024005', dept:'Electronics', email:'rohan@college.edu', pct:100, present:20, total:20 },
+  { id:14, name:'Kavitha M', roll:'EC2024006', dept:'Electronics', email:'kavitha@college.edu', pct:65, present:13, total:20 },
+  { id:15, name:'Naveen P', roll:'ME2024001', dept:'Mechanical', email:'naveen@college.edu', pct:100, present:20, total:20 },
+  { id:16, name:'Sunita A', roll:'ME2024002', dept:'Mechanical', email:'sunita@college.edu', pct:58, present:12, total:21 },
+  { id:17, name:'Deepak R', roll:'ME2024003', dept:'Mechanical', email:'deepak@college.edu', pct:82, present:17, total:21 },
+  { id:18, name:'Neha C', roll:'ME2024004', dept:'Mechanical', email:'neha@college.edu', pct:100, present:21, total:21 },
+];
+
+const motivMsgs = [
+  { student:'Rahul Verma', tone:'Inspiring', channel:'Email', date:'Today 09:15', msg:'Your unwavering commitment to 100% attendance reflects the discipline of a true achiever. Keep shining, Rahul!' },
+  { student:'Meena Iyer', tone:'Encouraging', channel:'Email + SMS', date:'Today 09:15', msg:'Meena, your perfect attendance is a testament to your dedication. The faculty recognizes your consistency!' },
+  { student:'Vikram Singh', tone:'Academic', channel:'SMS', date:'Yesterday', msg:'Vikram, maintaining 100% attendance puts you in the top tier of academic performers. Excellent discipline!' },
+];
+
+function getStatus(pct) {
+  if (pct === 100) return { label:'Perfect', cls:'badge-blue' };
+  if (pct >= 80) return { label:'Good', cls:'badge-success' };
+  if (pct >= 70) return { label:'Low', cls:'badge-warning' };
+  if (pct >= 60) return { label:'At Risk', cls:'badge-warning' };
+  return { label:'Critical', cls:'badge-danger' };
+}
+
+function getPctClass(pct) {
+  if (pct === 100) return 'pct-perfect';
+  if (pct >= 80) return 'pct-good';
+  if (pct >= 70) return 'pct-warning';
+  return 'pct-danger';
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+}
+
+function avatarColor(id) { return AVATARS[id % AVATARS.length]; }
+
+// ---- STUDENTS TABLE ----
+function renderStudentsTable() {
+  const q = document.getElementById('student-search').value.toLowerCase();
+  const dept = document.getElementById('dept-filter').value;
+  const status = document.getElementById('status-filter').value;
+
+  let filtered = students.filter(s => {
+    const matchQ = s.name.toLowerCase().includes(q) || s.roll.toLowerCase().includes(q);
+    const matchDept = !dept || s.dept === dept;
+    let matchStatus = true;
+    if (status === 'danger') matchStatus = s.pct < 70;
+    else if (status === 'warning') matchStatus = s.pct >= 70 && s.pct < 80;
+    else if (status === 'good') matchStatus = s.pct >= 80 && s.pct < 100;
+    else if (status === 'perfect') matchStatus = s.pct === 100;
+    return matchQ && matchDept && matchStatus;
+  });
+
+  document.getElementById('students-count').textContent = `Showing ${filtered.length} students`;
+
+  const tbody = document.getElementById('students-tbody');
+  tbody.innerHTML = filtered.map(s => {
+    const st = getStatus(s.pct);
+    const pc = getPctClass(s.pct);
+    const color = avatarColor(s.id);
+    return `<tr>
+      <td><div class="name-cell">
+        <div class="avatar" style="background:${color}22; color:${color};">${initials(s.name)}</div>
+        <div>
+          <div style="font-weight:500;font-size:13px;">${s.name}</div>
+          <div style="font-size:11px;color:var(--text3);">${s.email}</div>
+        </div>
+      </div></td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);">${s.roll}</span></td>
+      <td style="font-size:12px;color:var(--text2);">${s.dept}</td>
+      <td><span style="font-weight:600;font-size:15px;">${s.pct}%</span><br><span style="font-size:11px;color:var(--text3);">${s.present}/${s.total} days</span></td>
+      <td style="min-width:100px;"><div class="progress-bar ${pc}"><div class="progress-fill" style="width:${s.pct}%"></div></div></td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td>
+        ${s.pct < 70
+          ? `<button class="btn-danger" style="font-size:11px;padding:5px 10px;" onclick="sendAlert(${s.id})">Send Alert</button>`
+          : s.pct === 100
+            ? `<button class="btn-success" style="font-size:11px;padding:5px 10px;" onclick="sendMotivation(${s.id})">Send Msg</button>`
+            : '<span style="font-size:11px;color:var(--text3);">—</span>'
+        }
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- ALERTS ----
+function renderAlerts() {
+  const atRisk = students.filter(s => s.pct < 70);
+  const critical = atRisk.filter(s => s.pct < 60);
+  const warning = atRisk.filter(s => s.pct >= 60);
+
+  document.getElementById('a-critical').textContent = critical.length;
+  document.getElementById('a-warning').textContent = warning.length;
+  document.getElementById('a-emails').textContent = atRisk.length;
+  document.getElementById('a-sms').textContent = Math.floor(atRisk.length * 0.8);
+
+  const list = document.getElementById('alerts-list');
+  list.innerHTML = atRisk.map(s => {
+    const isCrit = s.pct < 60;
+    return `<div class="notif">
+      <div class="notif-icon ${isCrit ? 'notif-icon-alert' : ''}" style="background:${isCrit ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}">
+        ${isCrit ? '🚨' : '⚠️'}
+      </div>
+      <div class="notif-body">
+        <div class="notif-title">${s.name} — ${s.roll}</div>
+        <div class="notif-sub">Attendance: <strong style="color:${isCrit ? '#f87171' : '#fbbf24'}">${s.pct}%</strong> — ${s.dept}<br>
+          Email: "${s.name.split(' ')[0]}, your attendance has dropped to ${s.pct}%. Please attend classes regularly to avoid shortage."
+        </div>
+        <div class="notif-time">${isCrit ? 'CRITICAL' : 'WARNING'} · Auto-alert ready · ${s.email}</div>
+      </div>
+      <span class="badge ${isCrit ? 'badge-danger' : 'badge-warning'}">${isCrit ? 'Critical' : 'At Risk'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentAlerts() {
+  const atRisk = students.filter(s => s.pct < 70).slice(0, 4);
+  document.getElementById('recent-alerts-list').innerHTML = atRisk.map(s => {
+    const isCrit = s.pct < 60;
+    return `<div class="notif">
+      <div class="notif-icon" style="background:${isCrit ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}; width:28px; height:28px; font-size:13px;">${isCrit ? '🚨' : '⚠️'}</div>
+      <div class="notif-body">
+        <div class="notif-title" style="font-size:12px;">${s.name}</div>
+        <div class="notif-sub" style="font-size:11px;">${s.pct}% · ${s.dept}</div>
+      </div>
+      <span class="badge ${isCrit ? 'badge-danger' : 'badge-warning'}" style="font-size:9px;">${isCrit ? 'Critical' : 'At Risk'}</span>
+    </div>`;
+  }).join('');
+}
+
+function sendAlert(id) {
+  const s = students.find(x => x.id === id);
+  showToast(`📨 Alert sent to ${s.name} (${s.email})`);
+}
+
+function sendAllAlerts() {
+  const n = students.filter(s => s.pct < 70).length;
+  showToast(`📨 ${n} alert emails dispatched successfully!`);
+}
+
+// ---- ATTENDANCE ----
+function renderAttendanceList() {
+  const dept = document.getElementById('dept-attendance').value;
+  const deptStudents = students.filter(s => s.dept === dept);
+  const today = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('today-date').textContent = today;
+
+  document.getElementById('attendance-list').innerHTML = deptStudents.map(s => `
+    <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:0.5px solid var(--border); transition:background 0.15s;" 
+         onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+      <div class="avatar" style="background:${avatarColor(s.id)}22; color:${avatarColor(s.id)};">${initials(s.name)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${s.name}</div>
+        <div style="font-size:11px;color:var(--text3);">${s.roll} · Current: ${s.pct}%</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2);">
+        <input type="checkbox" id="att-${s.id}" checked style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+        Present
+      </label>
+    </div>
+  `).join('');
+}
+
+function selectAll(val) {
+  const dept = document.getElementById('dept-attendance').value;
+  students.filter(s => s.dept === dept).forEach(s => {
+    const el = document.getElementById(`att-${s.id}`);
+    if (el) el.checked = val;
+  });
+}
+
+function saveAttendance() {
+  const dept = document.getElementById('dept-attendance').value;
+  const deptStudents = students.filter(s => s.dept === dept);
+  let presentCount = 0;
+  deptStudents.forEach(s => {
+    if (document.getElementById(`att-${s.id}`)?.checked) presentCount++;
+  });
+  const pct = Math.round((presentCount / deptStudents.length) * 100);
+
+  const newAlerts = deptStudents.filter(s => {
+    const el = document.getElementById(`att-${s.id}`);
+    return el && !el.checked && s.pct < 75;
+  });
+
+  document.getElementById('ai-analysis-box').innerHTML = `
+    <div style="margin-bottom: 1rem;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;"><span class="ai-dot"></span> AI Analysis Complete</div>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div style="flex:1;min-width:100px; background:var(--surface2); border-radius:8px; padding:12px; text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--accent);">${pct}%</div>
+          <div style="font-size:11px;color:var(--text3);">Today's Rate</div>
+        </div>
+        <div style="flex:1;min-width:100px; background:var(--surface2); border-radius:8px; padding:12px; text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:#34d399;">${presentCount}</div>
+          <div style="font-size:11px;color:var(--text3);">Present</div>
+        </div>
+        <div style="flex:1;min-width:100px; background:var(--surface2); border-radius:8px; padding:12px; text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:#f87171;">${deptStudents.length - presentCount}</div>
+          <div style="font-size:11px;color:var(--text3);">Absent</div>
+        </div>
+      </div>
+      ${newAlerts.length > 0
+        ? `<div class="msg-card alert-msg"><div class="msg-preview" style="font-size:12px;">🚨 AI detected ${newAlerts.length} student(s) requiring alerts: ${newAlerts.map(s=>s.name).join(', ')}. Alert emails have been queued automatically.</div></div>`
+        : `<div class="msg-card" style="border-left-color:var(--success);"><div class="msg-preview" style="font-size:12px;">✅ All students in this department are within acceptable attendance range. No alerts needed.</div></div>`
+      }
+      <div class="msg-card" style="border-left-color:var(--accent2);">
+        <div class="msg-preview" style="font-size:12px;">🤖 AI Recommendation: ${pct >= 90 ? 'Excellent attendance today! Department is on track.' : pct >= 75 ? 'Moderate attendance. Consider sending reminders for tomorrow.' : 'Low attendance detected. Investigate cause and send alerts to chronic absentees.'}</div>
+      </div>
+    </div>
+  `;
+  showToast(`✅ Attendance saved! AI analysis complete.`);
+}
+
+// ---- MESSAGES ----
+const motivationalTemplates = {
+  'Encouraging': (n) => `Dear ${n}, your perfect attendance this month is truly commendable! Your consistency and dedication inspire your peers. Keep up the fantastic work — your future is bright!`,
+  'Academic': (n) => `Dear ${n}, data shows that students with 100% attendance outperform peers by 23% in examinations. Your discipline in maintaining perfect attendance puts you on a strong academic trajectory. Well done!`,
+  'Inspiring': (n) => `${n}, every single day you showed up is a step toward your dreams. Your 100% attendance isn't just a number — it's a reflection of your character, your commitment, and your unstoppable spirit!`,
+  'Friendly': (n) => `Hey ${n}! Just wanted to say — you're absolutely crushing it with perfect attendance this month! 🎉 Your dedication doesn't go unnoticed. You rock!`,
+};
+
+function generateMessage() {
+  const name = document.getElementById('msg-student').value.trim() || 'Student';
+  const tone = document.getElementById('msg-tone').value;
+  const channel = document.getElementById('msg-channel').value;
+  const msg = motivationalTemplates[tone](name);
+
+  document.getElementById('msg-output').innerHTML = `
+    <div class="msg-card star-msg">
+      <div style="font-size:11px; color:var(--text3); margin-bottom:8px;">Generated for: <strong style="color:var(--text2);">${name}</strong> · ${tone} · via ${channel}</div>
+      <div class="msg-preview">${msg}</div>
+      <div class="flex-row" style="margin-top:10px;">
+        <button class="btn-success" style="font-size:11px; padding:6px 12px;" onclick="showToast('✅ Message sent to ${name} via ${channel}!')">Send Now</button>
+        <button class="btn-ghost" style="font-size:11px; padding:6px 12px;" onclick="showToast('📋 Message copied!')">Copy</button>
+      </div>
+    </div>`;
+}
+
+function renderMsgHistory() {
+  document.getElementById('msg-history').innerHTML = motivMsgs.map(m => `
+    <div class="msg-card star-msg" style="margin-bottom:10px;">
+      <div class="msg-meta" style="margin-bottom:8px;">
+        <span>🏆 ${m.student}</span>
+        <span>🎯 ${m.tone}</span>
+        <span>📤 ${m.channel}</span>
+        <span>🕒 ${m.date}</span>
+      </div>
+      <div class="msg-preview">${m.msg}</div>
+    </div>
+  `).join('');
+}
+
+function renderPerfectStudents() {
+  const perfect = students.filter(s => s.pct === 100);
+  document.getElementById('perfect-students-list').innerHTML = perfect.map(s => `
+    <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);">
+      <div class="avatar" style="background:${avatarColor(s.id)}22;color:${avatarColor(s.id)};">${initials(s.name)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${s.name}</div>
+        <div style="font-size:11px;color:var(--text3);">${s.dept}</div>
+      </div>
+      <span class="badge badge-blue">100%</span>
+    </div>
+  `).join('');
+}
+
+function sendMotivation(id) {
+  const s = students.find(x => x.id === id);
+  showToast(`🏆 Motivational message sent to ${s.name}!`);
+}
+
+// ---- DASHBOARD ----
+function renderDashboardStats() {
+  const atRisk = students.filter(s => s.pct < 70).length;
+  const perfect = students.filter(s => s.pct === 100).length;
+  const avg = Math.round(students.reduce((a, s) => a + s.pct, 0) / students.length * 10) / 10;
+  document.getElementById('stat-total').textContent = students.length;
+  document.getElementById('stat-avg').textContent = avg + '%';
+  document.getElementById('stat-risk').textContent = atRisk;
+  document.getElementById('stat-perfect').textContent = perfect;
+}
+
+function renderDeptBars() {
+  const depts = ['Computer Science', 'Electronics', 'Mechanical'];
+  const colors = ['#3b82f6', '#06b6d4', '#10b981'];
+  const labels = ['CS', 'EC', 'ME'];
+
+  document.getElementById('dept-bars').innerHTML = depts.map((d, i) => {
+    const dStudents = students.filter(s => s.dept === d);
+    const avg = Math.round(dStudents.reduce((a, s) => a + s.pct, 0) / dStudents.length);
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span style="font-size:12px;color:var(--text2);">${labels[i]} — ${d}</span>
+        <span style="font-size:12px;font-weight:600;color:${colors[i]};">${avg}%</span>
+      </div>
+      <div class="progress-bar" style="height:8px;">
+        <div class="progress-fill" style="width:${avg}%; background:${colors[i]};"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDonut() {
+  const ranges = [
+    { label: 'Perfect (100%)', color: '#3b82f6', count: students.filter(s=>s.pct===100).length },
+    { label: 'Good (80–99%)', color: '#10b981', count: students.filter(s=>s.pct>=80&&s.pct<100).length },
+    { label: 'Low (70–79%)', color: '#f59e0b', count: students.filter(s=>s.pct>=70&&s.pct<80).length },
+    { label: 'At Risk (<70%)', color: '#ef4444', count: students.filter(s=>s.pct<70).length },
+  ];
+
+  const total = ranges.reduce((a, r) => a + r.count, 0);
+  const r = 45, cx = 60, cy = 60, sw = 18;
+  const circ = 2 * Math.PI * r;
+
+  let offset = 0;
+  let segs = '';
+  ranges.forEach(rng => {
+    const pct = rng.count / total;
+    const dash = pct * circ;
+    const gap = circ - dash;
+    segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${rng.color}" stroke-width="${sw}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${(-offset * circ).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += pct;
+  });
+
+  document.getElementById('donut-svg').innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e2d44" stroke-width="${sw}"/>${segs}`;
+
+  document.getElementById('donut-legend').innerHTML = ranges.map(rng => `
+    <div class="donut-item">
+      <div class="donut-dot" style="background:${rng.color};"></div>
+      <span style="font-size:12px;color:var(--text2);">${rng.label}</span>
+      <span style="font-size:12px;font-weight:600;color:var(--text);">${rng.count}</span>
+    </div>
+  `).join('');
+}
+
+function initTrendChart() {
+  const ctx = document.getElementById('trendChart')?.getContext('2d');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'],
+      datasets: [{
+        label: 'Avg Attendance %',
+        data: [82, 79, 75, 77, 72, 76, 78, 81],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.08)',
+        borderWidth: 2,
+        pointBackgroundColor: '#3b82f6',
+        pointRadius: 4,
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2236',
+          borderColor: 'rgba(99,179,237,0.22)',
+          borderWidth: 1,
+          titleColor: '#e2e8f0',
+          bodyColor: '#94a3b8',
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#64748b', font: { size: 11 } },
+          grid: { color: 'rgba(99,179,237,0.07)' },
+        },
+        y: {
+          min: 60, max: 100,
+          ticks: { color: '#64748b', font: { size: 11 }, callback: v => v + '%' },
+          grid: { color: 'rgba(99,179,237,0.07)' },
+        }
+      }
+    }
+  });
+}
+
+// ---- REPORTS ----
+function renderReports() {
+  const depts = ['Computer Science', 'Electronics', 'Mechanical'];
+  const colors = ['#3b82f6', '#06b6d4', '#10b981'];
+
+  document.getElementById('dept-report-bars').innerHTML = depts.map((d, i) => {
+    const ds = students.filter(s => s.dept === d);
+    const avg = Math.round(ds.reduce((a, s) => a + s.pct, 0) / ds.length);
+    const atRisk = ds.filter(s => s.pct < 70).length;
+    return `<div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--text);">${d}</span>
+        <span style="font-size:13px;font-weight:600;color:${colors[i]};">${avg}%</span>
+      </div>
+      <div class="progress-bar" style="height:10px;">
+        <div class="progress-fill" style="width:${avg}%; background:${colors[i]};"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">${ds.length} students · ${atRisk} at risk</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dept-stats').innerHTML = depts.map((d, i) => {
+    const ds = students.filter(s => s.dept === d);
+    const avg = Math.round(ds.reduce((a, s) => a + s.pct, 0) / ds.length);
+    return `<div style="background:var(--surface2); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:${colors[i]};">${avg}%</div>
+      <div style="font-size:11px;color:var(--text3);">${d.split(' ')[0]}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ai-insights').innerHTML = [
+    { icon:'📉', text:'Suresh K (EC) is at critical risk with 48% attendance. Immediate intervention recommended.', color:'#f87171' },
+    { icon:'📈', text:'Computer Science department shows improving trend over the last 3 weeks. Keep up the momentum.', color:'#34d399' },
+    { icon:'🎯', text:'11 students with 100% attendance — motivational messages have been dispatched automatically.', color:'#60a5fa' },
+    { icon:'⚠️', text:'Monday attendance is consistently 8% lower than other weekdays. Consider scheduling important sessions on Mondays.', color:'#fbbf24' },
+    { icon:'🤖', text:'AI predicts 3 additional students may fall below 70% threshold in the next 2 weeks if current trend continues.', color:'#a78bfa' },
+  ].map(i => `
+    <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:0.5px solid var(--border);">
+      <div style="font-size:18px; flex-shrink:0;">${i.icon}</div>
+      <div style="font-size:13px; color:var(--text); line-height:1.6;">${i.text}</div>
+    </div>
+  `).join('');
+}
+
+// ---- ADD STUDENT ----
+function addStudent() {
+  const name = document.getElementById('new-name').value.trim();
+  const roll = document.getElementById('new-roll').value.trim();
+  const dept = document.getElementById('new-dept').value;
+  const email = document.getElementById('new-email').value.trim();
+
+  if (!name || !roll) { showToast('⚠️ Name and Roll Number are required!'); return; }
+
+  const id = students.length + 1;
+  students.push({ id, name, roll, dept, email: email || roll.toLowerCase() + '@college.edu', pct: 100, present: 0, total: 0 });
+
+  closeModal('add-student-modal');
+  renderStudentsTable();
+  renderDashboardStats();
+  showToast(`✅ ${name} added successfully!`);
+
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-roll').value = '';
+  document.getElementById('new-email').value = '';
+}
+
+// ---- PAGE SWITCHING ----
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  if (id === 'students') renderStudentsTable();
+  if (id === 'alerts') renderAlerts();
+  if (id === 'messages') { renderPerfectStudents(); renderMsgHistory(); }
+  if (id === 'attendance') renderAttendanceList();
+  if (id === 'reports') renderReports();
+}
+
+// ---- MODAL ----
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ---- TOAST ----
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ---- INIT ----
+renderDashboardStats();
+renderDonut();
+renderDeptBars();
+renderRecentAlerts();
+setTimeout(initTrendChart, 100);
+</script>
+</body>
+</html>
